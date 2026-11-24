@@ -36,6 +36,9 @@ public class ArceusBotSettings : IBotStateSettings, ICountSettings
     [Category(Arceus), Description("AlphaScan Conditions"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
     public AlphaScanFiltersCategory AlphaScanConditions { get; set; } = new();
 
+    [Category(Arceus), Description("Tree Hunt Conditions"), DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+    public TreeHuntFiltersCategory TreeHuntConditions { get; set; } = new();
+
     [Category(Arceus), Description("When enabled, the screen will be turned off during normal bot loop operation to save power.")]
     public bool ScreenOff { get; set; }
 
@@ -85,6 +88,9 @@ public class ArceusBotSettings : IBotStateSettings, ICountSettings
 
         [Category(Arceus), Description("When enabled, the bot will teleport to the location of the match before pressing HOME.")]
         public bool TeleportToDistortionLocation { get; set; } = false;
+
+        [Category(Arceus), Description("Only stop on matches of this gender. Set to Any to disable this filter.")]
+        public GenderType DesiredGender { get; set; } = GenderType.Any;
     }
 
     [Category(Arceus), TypeConverter(typeof(CategoryConverter<MultiScanFiltersCategory>))]
@@ -97,6 +103,72 @@ public class ArceusBotSettings : IBotStateSettings, ICountSettings
 
         [Category(Arceus), Description("Species for MultiSpawners Group ID")]
         public MultiSpawners MultiSpecies { get; set; } = MultiSpawners.Eevee;
+    }
+
+    [Category(Arceus), TypeConverter(typeof(CategoryConverter<TreeHuntFiltersCategory>))]
+    public class TreeHuntFiltersCategory
+    {
+        public override string ToString() => "Tree Hunt Conditions";
+
+        [Category(Arceus), Description("What the tree hunt stops for. ShinyAlpha: only a shiny alpha. Shiny / Alpha: either one alone. ShinyOrAlpha: any shiny or any alpha.")]
+        public TreeHuntTarget Target { get; set; } = TreeHuntTarget.ShinyAlpha;
+
+        [Category(Arceus), Description("Extra presses of the area D-pad button on top of AreaSelectDpadPresses to reach the Crimson Mirelands (one step past Obsidian Fieldlands). -1 = automatic (1). Set an exact number if the automatic one lands on the wrong area.")]
+        public int AreaSelectExtraPresses { get; set; } = -1;
+
+        [Category(Arceus), Description("Only stop for a Burmy. When on, a shiny or alpha Wormadam or Pachirisu from the same tree is ignored.")]
+        public bool BurmyOnly { get; set; } = true;
+
+        [Category(Arceus), Description("Milliseconds to hold the stick backwards after the save loads, to reach the village entrance.")]
+        public int WalkBackMs { get; set; } = 3000;
+
+        [Category(Arceus), Description("Step 1 at the village entrance: how many times to press A to open the area menu. Set to 0 if the menu opens by itself when you reach the entrance.")]
+        public int OpenMenuPresses { get; set; } = 1;
+
+        [Category(Arceus), Description("Milliseconds to wait for the area menu to appear before moving the cursor.")]
+        public int MenuOpenDelayMs { get; set; } = 2000;
+
+        [Category(Arceus), Description("Step 2: which D-pad button moves the menu cursor from Jubilife Village to Obsidian Fieldlands.")]
+        public DpadDirection AreaSelectDirection { get; set; } = DpadDirection.Right;
+
+        [Category(Arceus), Description("How many times to press that D-pad button to land on Obsidian Fieldlands.")]
+        public int AreaSelectDpadPresses { get; set; } = 1;
+
+        [Category(Arceus), Description("Step 3: how many times to press A (one per second) AFTER the cursor is on Obsidian Fieldlands, to confirm and get through the loading screen.")]
+        public int AreaSelectPresses { get; set; } = 12;
+
+        [Category(Arceus), Description("Seconds to wait for the new tree values to appear after choosing the area. After 3 failures in a row the hunt stops so you can check the movement.")]
+        public int FieldLoadTimeoutSeconds { get; set; } = 60;
+
+        [Category(Arceus), Description("Watchdog for the game restart between cycles. If closing and restarting the game takes longer than this many minutes (for example a loading screen that never ends), it is cancelled and tried again, up to 3 times, then the hunt stops. 0 = off. A normal restart takes under a minute.")]
+        public int RestartWatchdogMinutes { get; set; } = 4;
+
+        [Category(Arceus), Description("Faster cycles: stop pressing A as soon as the new tree values have appeared and stayed the same, instead of always pressing A the full number of times. The bot checks itself (on the first cycle, every 100th cycle and at every match) that the early values are the same as the settled ones, and switches this off for the run if they are not. Turn it off to always press the full number of times.")]
+        public bool StopPressingWhenLoaded { get; set; } = true;
+
+        [Category(Arceus), Description("Seconds the bot waits for the area to finish loading before it double-checks the tree values (used by the fast mode above on a match, the first cycle and every 100th cycle). 0 = never double-check.")]
+        public int MatchSettleSeconds { get; set; } = 15;
+
+        [Category(Arceus), Description("While the hunt is paused for a match, post a reminder (with the mention) to Discord every this many minutes, until you type $continue. 0 = no reminders.")]
+        public int MatchReminderMinutes { get; set; } = 30;
+
+        [Category(Arceus), Description("Web link to the numbered tree map picture (a direct link to the image, e.g. a raw.githubusercontent.com address). When set, the map is sent in an embed to every echo channel right after a match. Empty = use MapImageFile instead.")]
+        public string MapImageUrl { get; set; } = "https://raw.githubusercontent.com/GumGumDragoon/BurmyHuntTrees/refs/heads/main/crimson_tree_numbers.jpg";
+
+        [Category(Arceus), Description("Picture of the numbered tree map, sent to Discord right after a match is announced so you can find the tree. A bare file name is looked for in the TreeFinder folder next to the bot program (a full path also works). Only used when MapImageUrl is empty.")]
+        public string MapImageFile { get; set; } = "crimson_tree_numbers.jpg";
+
+        [Category(Arceus), Description("Send a Discord progress message every this many cycles (0 = never).")]
+        public int ProgressEveryCycles { get; set; } = 50;
+
+        [Category(Arceus), Description("0 = work out the shiny rolls automatically (charm and Pokedex research). If the log's assumed number is wrong for your save, set the real number here (it is 7 with the shiny charm and perfect research).")]
+        public int ShinyRollsOverride { get; set; } = 0;
+
+        [Category(Arceus), Description("When enabled, only trees that look like they are shaking (their shake roll is below 10, usually about 4 to 6 trees per visit) can trigger a match. Disable it to match on every tree.")]
+        public bool OnlyShakingTrees { get; set; } = true;
+
+        [Category(Arceus), Description("ON (default): trees whose entry roll is the alpha slot are predicted as alpha Burmy. Turn it OFF to treat every tree as a normal Burmy (for example if alpha trees keep giving normal ones).")]
+        public bool AlphaSlotsSpawnAlpha { get; set; } = true;
     }
 
     [Category(Arceus), TypeConverter(typeof(CategoryConverter<AlphaScanFiltersCategory>))]

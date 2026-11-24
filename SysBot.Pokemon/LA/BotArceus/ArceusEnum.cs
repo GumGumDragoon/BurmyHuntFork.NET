@@ -58,6 +58,21 @@
         NoBonusRolls = 1,
     }
 
+    public enum DpadDirection
+    {
+        Right,
+        Down,
+    }
+
+    public enum TreeHuntTarget
+    {
+        ShinyAlpha,
+        Shiny,
+        Alpha,
+        ShinyOrAlpha,
+        ListAll,
+    }
+
     public enum MultiSpawners
     {
         CombeeRight = 390,
@@ -71,5 +86,6 @@
         HipposLeft = 166,
         Magikarp = 284,
         Buneary = 183,
+        TreeHunt = 9005,
     }
 }
